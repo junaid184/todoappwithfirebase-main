@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Todo</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body onload="getUser()">
+    <div class="userInfo">
+      <h1 id="email"></h1>
+      <h1 id="username"></h1>
+    </div>
+    <button onclick="signout()">log Out</button>
+    <div class="todoapp">
+      <h1 class="todoH">TODO APPLICATION</h1>
+      <h1 id="welcome"></h1>
+      <div class="input">
+        <input type="text" id="input" placeholder="Enter what to do " />
+        <button class="add_btn" onclick="add()">ADD ITEM</button>
+        <button class="deletelbtn" onclick="delAll(this)">DELETE ALL</button>
+      </div>
+      <ul id="list"></ul>
+    </div>
+    <script type="module">
+      // Import the functions you need from the SDKs you need
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+      import {
+        getDatabase,
+        ref,
+        set,
+        child,
+        get,
+        onValue,
+      } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js";
+      import {
+        getAuth,
+        signInWithEmailAndPassword,
+        createUserWithEmailAndPassword,
+        signOut,
+      } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+      // TODO: Add SDKs for Firebase products that you want to use
+      // https://firebase.google.com/docs/web/setup#available-libraries
+
+      // Your web app's Firebase configuration
+      const firebaseConfig = {
+        apiKey: "AIzaSyAZZfTDY76Y__4UrEAnAjU93FvZnJz6ZO4",
+        authDomain: "quiz-app-f8dc4.firebaseapp.com",
+        databaseURL: "https://quiz-app-f8dc4-default-rtdb.firebaseio.com",
+        projectId: "quiz-app-f8dc4",
+        storageBucket: "quiz-app-f8dc4.appspot.com",
+        messagingSenderId: "897786823700",
+        appId: "1:897786823700:web:51c431f619b766c3e21301",
+      };
+
+      // Initialize Firebase
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth();
+      const db = getDatabase(app);
+      const signout = () => {
+        signOut(auth)
+          .then(() => {
+            location.href = "signin.html";
+          })
+          .catch((error) => {
+            console.log(error.message);
+          });
+      };
+
+      const getUser = () => {
+        onAuthStateChanged(auth, (user) => {
+          if (user) {
+            var uid = user.uid;
+            onValue(ref(`users/${uid}`), (data) => {
+              let userData = data.val();
+              let username = document.getElementById("username");
+              let email = document.getElementById("email");
+              username.innerHTML = userData.username;
+              email.innerHTML = userData.email;
+            });
+            // ...
+            const dbRef = ref(getDatabase()); // getting all todos againt userId
+            get(child(dbRef, `users/${uid}/todoList`), (data) => {
+              console.log(data.val());
+              var ul = document.getElementById("list");
+              var li = document.createElement("li");
+              var liText = document.createElement("input");
+              liText.setAttribute("value", data.val().value);
+              ul.appendChild(li);
+              //creating delete button
+              var dltbtn = document.createElement("button");
+              var dltbtnText = document.cra;
+              console.log(li.appendChild(liText));
+              var dltbtn = document.createElement("button");
+              var dltbtnText = document.createElement("img");
+              dltbtnText.setAttribute(
+                "src",
+                "https://toppng.com/uploads/preview/recycling-bin-vector-delete-icon-png-black-11563002079w1isxqyyiv.png"
+              );
+              dltbtn.setAttribute("onclick", "delbtn(this)");
+              dltbtn.setAttribute("id", data.val().key);
+              dltbtn.appendChild(dltbtnText);
+              li.appendChild(dltbtn);
+              var hr = document.createElement("hr");
+              li.appendChild(hr);
+            });
+          } else {
+            // User is signed out
+            // ...
+            console.log("user is signed out");
+            let email = document.getElementById("email");
+            email.innerHTML = "User is Signed Out";
+          }
+        });
+      };
+
+      const add = () => {
+        var input = document.getElementById("input");
+        var ul = document.getElementById("list");
+
+        onAuthStateChanged(auth, (user) => {
+          if (user) {
+            //
+            //`users/${uid}/todoList/${key}`
+            var uid = user.uid;
+            var key = push().key;
+            let todoList = {
+              value: input.value,
+              key: key,
+            };
+            firebase
+              .database()
+              .ref(`users/${uid}/todoList/${key}`)
+              .set(todoList);
+
+            set(ref(db, `users/${uid}/todoList`), todoList) //saving todos in database
+              .then((todo) => {
+                alert("todo added");
+              })
+              .catch((error) => {
+                console.log(error.message);
+              });
+            input.value = "";
+
+            // ...
+          } else {
+            // User is signed out
+            // ...
+            console.log("user is signed out");
+            let email = document.getElementById("email");
+            email.innerHTML = "User is Signed Out";
+          }
+        });
+      };
+
+      const delbtn = (d) => {
+        firebase.auth().onAuthStateChanged((user) => {
+          if (user) {
+            var uid = user.uid;
+            console.log(d.id);
+            firebase.database().ref(`users/${uid}/todoList/${d.id}`).remove();
+            console.log("deleted successfully");
+            d.parentNode.remove();
+          } else {
+            console.log("usernot found");
+          }
+        });
+      };
+
+      const delAll = (a) => {
+        firebase.auth().onAuthStateChanged((user) => {
+          if (user) {
+            var uid = user.uid;
+            firebase.database().ref(`users/${uid}/todoList`).remove();
+            var ul = document.getElementById("list");
+            ul.innerHTML = "";
+          }
+        });
+      };
+    </script>
+  </body>
+</html>
